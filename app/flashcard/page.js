@@ -4,6 +4,7 @@ import React from "react";
 import CardList from "@/components/ui/CardList";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 
 import {
   Card,
@@ -21,7 +22,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 
-var fullresult = JSON.parse('[{"front":"Smart", "back":"ForTwo"}]');
+// var fullresult = JSON.parse('[{"front":"Smart", "back":"ForTwo"}]');
 const isToggled = false;
 
 function flip(backofcard) {
@@ -29,7 +30,9 @@ function flip(backofcard) {
 }
 
 export default function flashcard() {
+  const [loading, setloading] = useState(false);
   const [topic, setTopic] = useState("");
+  const [ai_result, set_ai_result] = useState([]);
   const {
     GoogleGenerativeAI,
     HarmCategory,
@@ -54,6 +57,7 @@ export default function flashcard() {
   };
 
   async function run() {
+    console.log("run triggered");
     const chatSession = model.startChat({
       generationConfig,
       // safetySettings: Adjust safety settings
@@ -65,14 +69,15 @@ export default function flashcard() {
       //   },
       // ],
     });
-
-    // const result = await chatSession.sendMessage("top 5 car brands");
+    setloading(true);
     const result = await chatSession.sendMessage(`${topic}`);
-    fullresult = JSON.parse(result.response.text());
-    console.log(fullresult);
+    set_ai_result(
+      JSON.parse(result.response.candidates[0].content.parts[0].text)
+    );
+    setloading(false);
   }
 
-  run();
+  // run();
 
   const data = [
     {
@@ -97,13 +102,16 @@ export default function flashcard() {
     },
   ];
 
-  console.log({topic})
+  console.log({ topic });
 
   return (
     <div>
       <div>
-        <p>auto gen card</p>
-        <CardList data={data} />
+        {loading ? (
+          <Skeleton className="w-full h-[500px] " />
+        ) : (
+          <CardList data={ai_result} />
+        )}
       </div>
 
       {/* <div>
@@ -138,15 +146,16 @@ export default function flashcard() {
           </CardFooter>
         </Card>
       </div> */}
-      <div className="flex w-full max-w-sm items-center space-x-2">
-        <p>gen search box</p>
+      <div className="flex w-full max-w-sm m-auto ">
         <Input
           type="email"
           placeholder="Choose a Topic"
           value={topic}
           onChange={(e) => setTopic(e.target.value)}
         />
-        <Button onClick={run} type="submit">Generate</Button>
+        <Button onClick={run} type="submit">
+          Generate
+        </Button>
       </div>
 
       {/* <div className="relative flex flex-col mt-6 text-gray-700 bg-white shadow-md bg-clip-border rounded-xl w-96">
